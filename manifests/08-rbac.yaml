@@ -1,0 +1,36 @@
+# Job 08 - Contrôle d'accès RBAC
+# On crée une identité "lecteur" qui peut UNIQUEMENT lire les pods (get/list/watch),
+# sans pouvoir les créer, modifier ou supprimer. Principe du moindre privilège.
+---
+# 1. L'identité : un compte de service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lecteur
+  namespace: default
+---
+# 2. Le rôle : permissions de lecture seule sur les pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lecteur-pods
+  namespace: default
+rules:
+  - apiGroups: [""]            # "" = groupe core (pods, services...)
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]   # lecture seule, pas de create/delete
+---
+# 3. Le lien : attribuer le rôle au compte de service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lecteur-pods-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: lecteur
+    namespace: default
+roleRef:
+  kind: Role
+  name: lecteur-pods
+  apiGroup: rbac.authorization.k8s.io
